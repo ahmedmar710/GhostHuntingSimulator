@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embedded Systems Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --border: #1e2230;
+    --accent: #00e5ff;
+    --accent2: #ff4757;
+    --accent3: #a8ff3e;
+    --text: #d4ddf0;
+    --muted: #4a5568;
+    --green: #a8ff3e;
+    --yellow: #ffe066;
+    --red: #ff4757;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    position: relative;
+  }
+
+  .header-badge {
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 4px 10px;
+    letter-spacing: 0.15em;
+    margin-top: 6px;
+    flex-shrink: 0;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Tab Nav */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    padding: 14px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+    position: relative;
+  }
+
+  .tab::before {
+    content: attr(data-num);
+    color: var(--accent);
+    margin-right: 8px;
+    font-size: 10px;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(0,229,255,0.04);
+  }
+
+  .panel { display: none; padding: 40px; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Code blocks */
+  .code-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .code-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #0e1117;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .file-name { color: var(--accent3); }
+  .lang-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 2px;
+  }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.7;
+    tab-size: 4;
+  }
+
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .num { color: #f78c6c; }
+  .cm { color: var(--muted); font-style: italic; }
+  .type { color: #ffcb6b; }
+  .mac { color: var(--accent); }
+  .op { color: var(--accent2); }
+
+  /* Terminal */
+  .terminal {
+    background: #060809;
+    border: 1px solid #1a2030;
+    border-radius: 4px;
+    font-size: 12px;
+    overflow: hidden;
+  }
+
+  .terminal-bar {
+    background: #0d1117;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .term-title { font-size: 11px; color: var(--muted); margin-left: 8px; }
+
+  .terminal-body { padding: 16px 20px; }
+
+  .prompt { color: var(--accent3); }
+  .prompt-path { color: var(--accent); }
+  .cmd { color: #fff; }
+  .output { color: #6b7fa8; }
+  .output-ok { color: var(--green); }
+  .output-warn { color: var(--yellow); }
+  .output-err { color: var(--red); }
+  .t-line { margin-bottom: 4px; }
+
+  /* Simulation */
+  .sim-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 700px) { .sim-container { grid-template-columns: 1fr; } }
+
+  .sim-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .sim-title {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .register-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .reg-name { color: var(--yellow); }
+  .reg-val { color: var(--accent3); font-weight: 600; }
+
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .mem-cell {
+    aspect-ratio: 1;
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--muted);
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .mem-cell.active {
+    background: rgba(0,229,255,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .mem-cell.written {
+    background: rgba(168,255,62,0.15);
+    border-color: var(--green);
+    color: var(--green);
+    animation: flash 0.4s ease;
+  }
+
+  @keyframes flash {
+    0% { background: rgba(168,255,62,0.5); }
+    100% { background: rgba(168,255,62,0.15); }
+  }
+
+  /* Controls */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+  .btn {
+    padding: 8px 18px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .btn.primary:hover { background: var(--accent); color: #000; }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: var(--red); color: #fff; }
+
+  /* Process table */
+  .proc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 12px;
+  }
+
+  .proc-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  .proc-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .proc-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .status-run { color: var(--green); }
+  .status-sleep { color: var(--yellow); }
+  .status-stop { color: var(--red); }
+  .status-wait { color: var(--accent); }
+
+  /* Test runner */
+  .test-list { list-style: none; }
+
+  .test-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    transition: background 0.2s;
+  }
+
+  .test-item:hover { background: rgba(255,255,255,0.02); }
+
+  .test-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+
+  .test-pass { background: rgba(168,255,62,0.2); color: var(--green); border: 1px solid var(--green); }
+  .test-fail { background: rgba(255,71,87,0.2); color: var(--red); border: 1px solid var(--red); }
+  .test-pending { background: rgba(0,229,255,0.1); color: var(--accent); border: 1px solid var(--accent); }
+
+  .test-name { flex: 1; color: var(--text); }
+  .test-time { color: var(--muted); font-size: 10px; }
+  .test-suite { color: var(--muted); font-size: 10px; }
+
+  /* Git log */
+  .git-log { font-size: 11px; }
+
+  .git-entry {
+    display: grid;
+    grid-template-columns: 80px 120px 1fr;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .git-hash { color: var(--yellow); }
+  .git-author { color: var(--accent); }
+  .git-msg { color: var(--text); }
+  .git-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 9px;
+    margin-right: 6px;
+    border-radius: 2px;
+  }
+  .git-tag-green { border-color: var(--green); color: var(--green); }
+
+  /* Progress bars */
+  .skill-row { margin-bottom: 14px; }
+  .skill-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 5px;
+  }
+  .skill-label span:first-child { color: var(--text); }
+  .skill-label span:last-child { color: var(--muted); }
+
+  .skill-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .skill-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0;
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .skill-fill.green { background: var(--green); }
+  .skill-fill.yellow { background: var(--yellow); }
+
+  /* Timing diagram */
+  .timing-svg { width: 100%; overflow: hidden; }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label span { color: var(--accent2); }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 4px;
+  }
+
+  .summary-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .summary-num span { color: var(--accent); }
+  .summary-label { font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: 0.08em; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* Ticker */
+  .ticker {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .ticker-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: blink 1s step-start infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">PORTFOLIO</div>
+  <div>
+    <h1>Embedded <span>&</span> Systems<br>Engineering Demo</h1>
+    <div class="header-sub">C / C++ · Linux · RTOS · Git · Testing · Scripting</div>
+    <div class="ticker"><div class="ticker-dot"></div> System nominal — all modules online</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-num="01" onclick="switchTab(0)">C/C++ Core</button>
+  <button class="tab" data-num="02" onclick="switchTab(1)">Linux & Shell</button>
+  <button class="tab" data-num="03" onclick="switchTab(2)">RTOS Simulator</button>
+  <button class="tab" data-num="04" onclick="switchTab(3)">Hardware Timing</button>
+  <button class="tab" data-num="05" onclick="switchTab(4)">Test Runner</button>
+  <button class="tab" data-num="06" onclick="switchTab(5)">Git Workflow</button>
+</div>
+
+<!-- TAB 1: C/C++ -->
+<div class="panel active" id="panel-0">
+  <div class="section-label"><span>//</span> C / C++ — Embedded Ring Buffer Implementation</div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">ring_buffer.h</span>
+      <span class="lang-badge">C++17</span>
+    </div>
+    <pre><span class="cm">// Thread-safe ring buffer for embedded UART DMA — lock-free with atomics</span>
+<span class="mac">#pragma once</span>
+<span class="mac">#include</span> <span class="str">&lt;atomic&gt;</span>
+<span class="mac">#include</span> <span class="str">&lt;cstdint&gt;</span>
+<span class="mac">#include</span> <span class="str">&lt;optional&gt;</span>
+
+<span class="kw">template</span> &lt;<span class="kw">typename</span> <span class="type">T</span>, <span class="type">size_t</span> N&gt;
+<span class="kw">class</span> <span class="type">RingBuffer</span> {
+    <span class="kw">static_assert</span>((N &amp; (N - <span class="num">1</span>)) == <span class="num">0</span>, <span class="str">"N must be a power of 2"</span>);
+    <span class="kw">static constexpr</span> <span class="type">size_t</span> MASK = N - <span class="num">1</span>;
+
+    <span class="type">T</span> buf_[N];
+    <span class="kw">alignas</span>(<span class="num">64</span>) std::atomic&lt;<span class="type">size_t</span>&gt; head_{<span class="num">0</span>};
+    <span class="kw">alignas</span>(<span class="num">64</span>) std::atomic&lt;<span class="type">size_t</span>&gt; tail_{<span class="num">0</span>};
+
+<span class="kw">public</span>:
+    <span class="cm">// ISR-safe push (producer side)</span>
+    <span class="type">bool</span> <span class="fn">push</span>(<span class="kw">const</span> <span class="type">T</span>&amp; val) <span class="kw">noexcept</span> {
+        <span class="type">size_t</span> h = head_.load(std::memory_order_relaxed);
+        <span class="type">size_t</span> next = (h + <span class="num">1</span>) &amp; MASK;
+        <span class="kw">if</span> (next == tail_.load(std::memory_order_acquire))
+            <span class="kw">return false</span>; <span class="cm">// full</span>
+        buf_[h] = val;
+        head_.store(next, std::memory_order_release);
+        <span class="kw">return true</span>;
+    }
+
+    <span class="cm">// Task-side pop returning std::optional</span>
+    std::optional&lt;<span class="type">T</span>&gt; <span class="fn">pop</span>() <span class="kw">noexcept</span> {
+        <span class="type">size_t</span> t = tail_.load(std::memory_order_relaxed);
+        <span class="kw">if</span> (t == head_.load(std::memory_order_acquire))
+            <span class="kw">return</span> std::nullopt; <span class="cm">// empty</span>
+        <span class="type">T</span> val = buf_[t];
+        tail_.store((t + <span class="num">1</span>) &amp; MASK, std::memory_order_release);
+        <span class="kw">return</span> val;
+    }
+
+    <span class="type">bool</span>   <span class="fn">empty</span>() <span class="kw">const noexcept</span> { <span class="kw">return</span> head_ == tail_; }
+    <span class="type">size_t</span> <span class="fn">capacity</span>() <span class="kw">const noexcept</span> { <span class="kw">return</span> N - <span class="num">1</span>; }
+};</pre>
+  </div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">uart_driver.c</span>
+      <span class="lang-badge">C99</span>
+    </div>
+    <pre><span class="mac">#include</span> <span class="str">"uart_driver.h"</span>
+<span class="mac">#include</span> <span class="str">"ring_buffer.h"</span>
+<span class="mac">#define</span> <span class="mac">UART_BAUD_115200</span>  <span class="num">0x8A</span>    <span class="cm">/* baud divisor register value  */</span>
+<span class="mac">#define</span> <span class="mac">UART_FIFO_DEPTH</span>   <span class="num">64</span>
+
+<span class="kw">static volatile</span> <span class="type">uint8_t</span> rx_buf[<span class="mac">UART_FIFO_DEPTH</span>];
+<span class="kw">static volatile</span> <span class="type">uint32_t</span> rx_head, rx_tail;
+
+<span class="cm">/* Interrupt Service Routine — runs in privileged mode */</span>
+<span class="kw">void</span> <span class="mac">__attribute__</span>((interrupt(<span class="str">"IRQ"</span>))) <span class="fn">UART0_IRQHandler</span>(<span class="kw">void</span>) {
+    <span class="type">uint8_t</span> status = <span class="fn">MMIO_READ8</span>(<span class="mac">UART0_LSR</span>);
+
+    <span class="kw">while</span> (status &amp; <span class="mac">LSR_DATA_READY</span>) {
+        <span class="type">uint8_t</span> byte = <span class="fn">MMIO_READ8</span>(<span class="mac">UART0_RBR</span>);
+        <span class="type">uint32_t</span> next = (rx_head + <span class="num">1</span>) % <span class="mac">UART_FIFO_DEPTH</span>;
+        <span class="kw">if</span> (next != rx_tail) {        <span class="cm">/* drop on overflow */</span>
+            rx_buf[rx_head] = byte;
+            rx_head = next;
+        }
+        status = <span class="fn">MMIO_READ8</span>(<span class="mac">UART0_LSR</span>);
+    }
+    <span class="fn">MMIO_WRITE8</span>(<span class="mac">UART0_EOI</span>, <span class="num">0x01</span>);  <span class="cm">/* clear interrupt */</span>
+}
+
+<span class="type">int32_t</span> <span class="fn">uart_read</span>(<span class="type">uint8_t</span> *out, <span class="type">uint32_t</span> len) {
+    <span class="type">uint32_t</span> read = <span class="num">0</span>;
+    <span class="kw">while</span> (read &lt; len &amp;&amp; rx_tail != rx_head) {
+        out[read++] = rx_buf[rx_tail];
+        rx_tail = (rx_tail + <span class="num">1</span>) % <span class="mac">UART_FIFO_DEPTH</span>;
+    }
+    <span class="kw">return</span> (<span class="type">int32_t</span>)read;
+}</pre>
+  </div>
+</div>
+
+<!-- TAB 2: Linux & Shell -->
+<div class="panel" id="panel-1">
+  <div class="section-label"><span>//</span> Linux Tools & Bash Scripting</div>
+
+  <div class="terminal" style="margin-bottom: 24px;">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="term-title">bash — build_and_flash.sh</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="prompt-path">~/projects/fw</span> <span class="prompt">$</span> <span class="cmd">./build_and_flash.sh --target stm32h7 --config release</span></div>
+      <div class="t-line"><span class="output">[BUILD] Checking toolchain: arm-none-eabi-gcc 12.3.1 ✓</span></div>
+      <div class="t-line"><span class="output">[BUILD] Running cmake -DCMAKE_BUILD_TYPE=Release -DTARGET=stm32h7 ...</span></div>
+      <div class="t-line"><span class="output-ok">[BUILD] Compilation finished — 0 errors, 2 warnings</span></div>
+      <div class="t-line"><span class="output">[SIZE]  text=24836  data=1248  bss=4096  total=30180 bytes</span></div>
+      <div class="t-line"><span class="output-warn">[WARN]  Stack usage approaching 80% on task_comms_handler</span></div>
+      <div class="t-line"><span class="output">[FLASH] Connecting via OpenOCD on /dev/ttyUSB0 ...</span></div>
+      <div class="t-line"><span class="output-ok">[FLASH] Erasing sectors 0x08000000 → 0x08007FFF ... done</span></div>
+      <div class="t-line"><span class="output-ok">[FLASH] Programming 30180 bytes ... done (1.2s)</span></div>
+      <div class="t-line"><span class="output-ok">[FLASH] Verify checksum: OK — 0xA3F2C891</span></div>
+      <div class="t-line"><span class="output">[RESET] Issuing system reset ... device running</span></div>
+      <div class="t-line">&nbsp;</div>
+      <div class="t-line"><span class="prompt-path">~/projects/fw</span> <span class="prompt">$</span> <span class="cmd">arm-none-eabi-objdump -d build/firmware.elf | head -30</span></div>
+      <div class="t-line"><span class="output">build/firmware.elf:     file format elf32-littlearm</span></div>
+      <div class="t-line"><span class="output">Disassembly of section .text:</span></div>
+      <div class="t-line"><span class="output">08000000 &lt;Reset_Handler&gt;:</span></div>
+      <div class="t-line"><span class="output"> 8000000:  4808        ldr   r0, [pc, #32]</span></div>
+      <div class="t-line"><span class="output"> 8000002:  4909        ldr   r1, [pc, #36]</span></div>
+    </div>
+  </div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">build_and_flash.sh</span>
+      <span class="lang-badge">Bash</span>
+    </div>
+    <pre><span class="cm">#!/usr/bin/env bash</span>
+<span class="kw">set</span> -euo pipefail
+
+<span class="type">TARGET</span>=<span class="str">"stm32h7"</span>
+<span class="type">CONFIG</span>=<span class="str">"debug"</span>
+<span class="type">DEVICE</span>=<span class="str">"/dev/ttyUSB0"</span>
+
+<span class="fn">log</span>() { <span class="kw">echo</span> <span class="str">"[<span class="kw">$(</span>echo <span class="str">$1</span> | tr '[:lower:]' '[:upper:]'<span class="kw">)</span>] ${@:2}"</span>; }
+<span class="fn">die</span>() { <span class="fn">log</span> ERROR <span class="str">"$*"</span>; <span class="kw">exit</span> <span class="num">1</span>; }
+
+<span class="cm"># Parse CLI args</span>
+<span class="kw">while</span> [[ $# -gt 0 ]]; <span class="kw">do</span>
+  <span class="kw">case</span> $1 <span class="kw">in</span>
+    --target) TARGET=<span class="str">"$2"</span>; shift 2 ;;
+    --config) CONFIG=<span class="str">"$2"</span>; shift 2 ;;
+    *)        <span class="fn">die</span> <span class="str">"Unknown arg: $1"</span> ;;
+  <span class="kw">esac</span>
+<span class="kw">done</span>
+
+<span class="cm"># Toolchain check</span>
+<span class="kw">command</span> -v arm-none-eabi-gcc &amp;&gt;/dev/null || <span class="fn">die</span> <span class="str">"Toolchain not found"</span>
+<span class="type">VER</span>=$(arm-none-eabi-gcc --version | head -1)
+<span class="fn">log</span> build <span class="str">"Checking toolchain: $VER ✓"</span>
+
+<span class="cm"># CMake build</span>
+mkdir -p build
+<span class="kw">pushd</span> build &gt;/dev/null
+cmake .. -DCMAKE_BUILD_TYPE=<span class="str">"${CONFIG^}"</span> -DTARGET=<span class="str">"$TARGET"</span> -GNinja
+ninja -j$(nproc)
+<span class="kw">popd</span> &gt;/dev/null
+
+<span class="cm"># Flash via OpenOCD</span>
+openocd -f interface/stlink.cfg -f target/<span class="str">"$TARGET"</span>.cfg \
+  -c <span class="str">"program build/firmware.elf verify reset exit"</span></pre>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="term-title">bash — Linux diagnostic commands</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="prompt">$</span> <span class="cmd">ps aux | grep uart_daemon | awk '{print $1,$2,$3,$11}'</span></div>
+      <div class="t-line"><span class="output">root 1842 0.0 /usr/sbin/uart_daemon</span></div>
+      <div class="t-line">&nbsp;</div>
+      <div class="t-line"><span class="prompt">$</span> <span class="cmd">strace -e trace=read,write -p 1842 2>&1 | head -5</span></div>
+      <div class="t-line"><span class="output">read(3, "\x02\x41\x00\xff", 4) = 4</span></div>
+      <div class="t-line"><span class="output">write(4, "ACK\r\n", 5) = 5</span></div>
+      <div class="t-line">&nbsp;</div>
+      <div class="t-line"><span class="prompt">$</span> <span class="cmd">cat /proc/interrupts | grep uart</span></div>
+      <div class="t-line"><span class="output"> 38:    14823    0    GIC-0    38    uart-pl011</span></div>
+      <div class="t-line">&nbsp;</div>
+      <div class="t-line"><span class="prompt">$</span> <span class="cmd">valgrind --tool=massif --pages-as-heap=yes ./firmware_host_test</span></div>
+      <div class="t-line"><span class="output-ok">==9821== HEAP SUMMARY: total heap usage: 42 allocs, 42 frees</span></div>
+      <div class="t-line"><span class="output-ok">==9821== All heap blocks were freed -- no leaks are possible</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: RTOS Simulator -->
+<div class="panel" id="panel-2">
+  <div class="section-label"><span>//</span> Real-Time OS — Task Scheduler Simulation</div>
+
+  <div class="controls">
+    <button class="btn primary" onclick="addTask()">+ Spawn Task</button>
+    <button class="btn" onclick="tickScheduler()">▶ Tick Scheduler</button>
+    <button class="btn" onclick="autoRun()" id="auto-btn">⟳ Auto Run</button>
+    <button class="btn danger" onclick="resetSim()">Reset</button>
+  </div>
+
+  <div class="sim-container">
+    <div class="sim-panel">
+      <div class="sim-title">// Process Table</div>
+      <table class="proc-table">
+        <thead>
+          <tr>
+            <th>PID</th>
+            <th>Name</th>
+            <th>Priority</th>
+            <th>State</th>
+            <th>Ticks</th>
+          </tr>
+        </thead>
+        <tbody id="proc-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="sim-panel">
+      <div class="sim-title">// CPU Registers (simulated)</div>
+      <div id="registers">
+        <div class="register-row"><span class="reg-name">PC</span><span class="reg-val" id="reg-pc">0x08001234</span></div>
+        <div class="register-row"><span class="reg-name">SP</span><span class="reg-val" id="reg-sp">0x20007FF0</span></div>
+        <div class="register-row"><span class="reg-name">LR</span><span class="reg-val" id="reg-lr">0x08000A1C</span></div>
+        <div class="register-row"><span class="reg-name">R0</span><span class="reg-val" id="reg-r0">0x00000000</span></div>
+        <div class="register-row"><span class="reg-name">R1</span><span class="reg-val" id="reg-r1">0x00000001</span></div>
+        <div class="register-row"><span class="reg-name">XPSR</span><span class="reg-val" id="reg-xpsr">0x21000000</span></div>
+        <div class="register-row"><span class="reg-name">TICK</span><span class="reg-val" id="reg-tick">0</span></div>
+      </div>
+      <div class="sim-title" style="margin-top:20px">// Stack Memory (0x20007F00)</div>
+      <div class="memory-grid" id="mem-grid"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px; background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:4px;">
+    <div class="sim-title">// Scheduler Log</div>
+    <div id="sched-log" style="font-size:11px; max-height:140px; overflow-y:auto; color:var(--muted);"></div>
+  </div>
+</div>
+
+<!-- TAB 4: Hardware Timing -->
+<div class="panel" id="panel-3">
+  <div class="section-label"><span>//</span> Hardware Timing Diagram — SPI Bus Transaction</div>
+
+  <svg class="timing-svg" viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" style="background:var(--surface);border:1px solid var(--border);border-radius:4px;">
+    <style>
+      .sig-label { font: 11px 'JetBrains Mono', monospace; fill: #4a5568; }
+      .sig-name { font: 11px 'JetBrains Mono', monospace; fill: #a8ff3e; }
+      .sig-ann { font: 10px 'JetBrains Mono', monospace; fill: #00e5ff; }
+      .t-mark { font: 9px 'JetBrains Mono', monospace; fill: #4a5568; }
+    </style>
+
+    <!-- Grid lines -->
+    <line x1="120" y1="20" x2="120" y2="260" stroke="#1e2230" stroke-width="1"/>
+    <line x1="220" y1="20" x2="220" y2="260" stroke="#1e2230" stroke-width="1" stroke-dasharray="4,4"/>
+    <line x1="320" y1="20" x2="320" y2="260" stroke="#1e2230" stroke-width="1" stroke-dasharray="4,4"/>
+    <line x1="420" y1="20" x2="420" y2="260" stroke="#1e2230" stroke-width="1" stroke-dasharray="4,4"/>
+    <line x1="520" y1="20" x2="520" y2="260" stroke="#1e2230" stroke-width="1" stroke-dasharray="4,4"/>
+    <line x1="620" y1="20" x2="620" y2="260" stroke="#1e2230" stroke-width="1" stroke-dasharray="4,4"/>
+    <line x1="720" y1="20" x2="720" y2="260" stroke="#1e2230" stroke-width="1"/>
+
+    <!-- Time axis -->
+    <text x="120" y="275" class="t-mark" text-anchor="middle">0ns</text>
+    <text x="220" y="275" class="t-mark" text-anchor="middle">100ns</text>
+    <text x="320" y="275" class="t-mark" text-anchor="middle">200ns</text>
+    <text x="420" y="275" class="t-mark" text-anchor="middle">300ns</text>
+    <text x="520" y="275" class="t-mark" text-anchor="middle">400ns</text>
+    <text x="620" y="275" class="t-mark" text-anchor="middle">500ns</text>
+    <text x="720" y="275" class="t-mark" text-anchor="middle">600ns</text>
+
+    <!-- CS_N -->
+    <text x="10" y="47" class="sig-name">CS_N</text>
+    <polyline points="120,35 135,35 135,55 720,55" stroke="#ff4757" stroke-width="2" fill="none"/>
+    <polyline points="120,35 120,35" stroke="#ff4757" stroke-width="2" fill="none"/>
+    <!-- active low pulse -->
+    <rect x="135" y="55" width="560" height="0" fill="none"/>
+
+    <!-- SCLK 10 MHz = 100ns period -->
+    <text x="10" y="97" class="sig-name">SCLK</text>
+    <polyline points="120,90 135,90 135,70 185,70 185,90 235,90 235,70 285,70 285,90 335,90 335,70 385,70 385,90 435,90 435,70 485,70 485,90 535,90 535,70 585,70 585,90 635,90 635,70 685,70 685,90 720,90" stroke="#00e5ff" stroke-width="2" fill="none"/>
+
+    <!-- MOSI — 0x42 = 01000010 -->
+    <text x="10" y="147" class="sig-name">MOSI</text>
+    <text x="200" y="142" class="sig-ann">0  1  0  0  0  0  1  0</text>
+    <!-- bit 7=0 -->
+    <polyline points="135,150 185,150 185,130 235,130 235,150 285,150 285,150 335,150 335,150 385,150 385,150 435,150 435,150 485,150 485,130 535,130 535,150 585,150 685,150" stroke="#ffe066" stroke-width="2" fill="none"/>
+
+    <!-- MISO — 0xE3 = 11100011 -->
+    <text x="10" y="197" class="sig-name">MISO</text>
+    <text x="200" y="192" class="sig-ann">1  1  1  0  0  0  1  1</text>
+    <polyline points="135,180 185,180 185,200 235,200 235,180 285,180 285,180 335,180 335,200 385,200 385,200 435,200 435,200 485,200 485,180 535,180 535,180 585,180 685,180" stroke="#a8ff3e" stroke-width="2" fill="none"/>
+
+    <!-- Setup/Hold annotations -->
+    <line x1="135" y1="210" x2="135" y2="250" stroke="#4a5568" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="185" y1="210" x2="185" y2="250" stroke="#4a5568" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="135" y1="240" x2="165" y2="240" stroke="#00e5ff" stroke-width="1"/>
+    <polygon points="165,237 170,240 165,243" fill="#00e5ff"/>
+    <text x="140" y="255" class="sig-ann">tSU=12ns</text>
+
+    <line x1="685" y1="35" x2="720" y2="35" stroke="#ff4757" stroke-width="2"/>
+    <line x1="685" y1="35" x2="685" y2="55" stroke="#ff4757" stroke-width="2"/>
+
+    <!-- Labels -->
+    <text x="400" y="30" class="sig-ann" text-anchor="middle">SPI Mode 0 — 10 MHz — 0x42 → 0xE3</text>
+  </svg>
+
+  <div style="margin-top:20px;">
+    <div class="code-card">
+      <div class="code-card-header">
+        <span class="file-name">spi_driver.c — reading timing from datasheet</span>
+        <span class="lang-badge">C</span>
+      </div>
+      <pre><span class="cm">/* SPI timing constants derived from device datasheet Table 12 */</span>
+<span class="mac">#define</span> <span class="mac">SPI_CLK_HZ</span>        <span class="num">10000000UL</span>   <span class="cm">/* 10 MHz max SCLK            */</span>
+<span class="mac">#define</span> <span class="mac">SPI_SETUP_NS</span>      <span class="num">12</span>           <span class="cm">/* tSU: data setup before CLK */</span>
+<span class="mac">#define</span> <span class="mac">SPI_HOLD_NS</span>       <span class="num">8</span>            <span class="cm">/* tHD: data hold after CLK   */</span>
+<span class="mac">#define</span> <span class="mac">SPI_CS_ASSERT_NS</span>  <span class="num">20</span>           <span class="cm">/* tCSS: CS low before SCLK   */</span>
+
+<span class="type">uint8_t</span> <span class="fn">spi_transfer</span>(<span class="type">uint8_t</span> tx) {
+    <span class="fn">GPIO_LOW</span>(<span class="mac">SPI_CS_PIN</span>);
+    <span class="fn">delay_ns</span>(<span class="mac">SPI_CS_ASSERT_NS</span>);
+
+    <span class="type">uint8_t</span> rx = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> bit = <span class="num">7</span>; bit &gt;= <span class="num">0</span>; bit--) {
+        <span class="fn">GPIO_WRITE</span>(<span class="mac">SPI_MOSI_PIN</span>, (tx &gt;&gt; bit) &amp; <span class="num">1</span>);
+        <span class="fn">delay_ns</span>(<span class="mac">SPI_SETUP_NS</span>);
+        <span class="fn">GPIO_HIGH</span>(<span class="mac">SPI_CLK_PIN</span>);
+        rx = (rx &lt;&lt; <span class="num">1</span>) | <span class="fn">GPIO_READ</span>(<span class="mac">SPI_MISO_PIN</span>);
+        <span class="fn">delay_ns</span>(<span class="mac">SPI_HOLD_NS</span>);
+        <span class="fn">GPIO_LOW</span>(<span class="mac">SPI_CLK_PIN</span>);
+    }
+
+    <span class="fn">GPIO_HIGH</span>(<span class="mac">SPI_CS_PIN</span>);
+    <span class="kw">return</span> rx;
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: Test Runner -->
+<div class="panel" id="panel-4">
+  <div class="section-label"><span>//</span> Test Suite — Google Test + PyTest</div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-num"><span>12</span></div>
+      <div class="summary-label">TOTAL TESTS</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num"><span style="color:var(--green)">10</span></div>
+      <div class="summary-label">PASSED</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num"><span style="color:var(--red)">1</span></div>
+      <div class="summary-label">FAILED</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num"><span style="color:var(--accent)">1</span></div>
+      <div class="summary-label">PENDING</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" onclick="runTests()">▶ Run All Tests</button>
+    <button class="btn" onclick="filterTests('pass')">Show Passed</button>
+    <button class="btn" onclick="filterTests('fail')">Show Failed</button>
+    <button class="btn" onclick="filterTests('all')">Show All</button>
+  </div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">test_ring_buffer.cpp — Google Test</span>
+      <span class="lang-badge">C++17 / GTest</span>
+    </div>
+    <ul class="test-list" id="test-list">
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">RingBuffer.PushPopSingleElement</div>
+          <div class="test-suite">ring_buffer_test.cpp:14</div>
+        </div>
+        <div class="test-time">0.3ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">RingBuffer.FullBufferRejectsNewItem</div>
+          <div class="test-suite">ring_buffer_test.cpp:28</div>
+        </div>
+        <div class="test-time">0.1ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">RingBuffer.EmptyBufferReturnsNullopt</div>
+          <div class="test-suite">ring_buffer_test.cpp:41</div>
+        </div>
+        <div class="test-time">0.1ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">RingBuffer.PowerOfTwoEnforced</div>
+          <div class="test-suite">ring_buffer_test.cpp:55</div>
+        </div>
+        <div class="test-time">0.2ms</div>
+      </li>
+      <li class="test-item" data-status="fail">
+        <div class="test-icon test-fail">✗</div>
+        <div>
+          <div class="test-name">RingBuffer.ConcurrentProducerConsumer</div>
+          <div class="test-suite">ring_buffer_test.cpp:72 — EXPECTED: head==tail ACTUAL: head=63 tail=62</div>
+        </div>
+        <div class="test-time" style="color:var(--red)">142ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">UART.ISRDropsOnOverflow</div>
+          <div class="test-suite">uart_test.cpp:19</div>
+        </div>
+        <div class="test-time">0.4ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">UART.ReadReturnsCorrectByteCount</div>
+          <div class="test-suite">uart_test.cpp:33</div>
+        </div>
+        <div class="test-time">0.2ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">SPI.TransferByte0x42Returns0xE3</div>
+          <div class="test-suite">spi_test.cpp:11</div>
+        </div>
+        <div class="test-time">0.6ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">SPI.CSAssertTimingMeetsSpec</div>
+          <div class="test-suite">spi_test.cpp:25</div>
+        </div>
+        <div class="test-time">0.3ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">Scheduler.HighPriorityPreemptsLow</div>
+          <div class="test-suite">rtos_test.cpp:8</div>
+        </div>
+        <div class="test-time">1.1ms</div>
+      </li>
+      <li class="test-item" data-status="pass">
+        <div class="test-icon test-pass">✓</div>
+        <div>
+          <div class="test-name">Scheduler.BlockedTaskNotScheduled</div>
+          <div class="test-suite">rtos_test.cpp:22</div>
+        </div>
+        <div class="test-time">0.8ms</div>
+      </li>
+      <li class="test-item" data-status="pending">
+        <div class="test-icon test-pending">⋯</div>
+        <div>
+          <div class="test-name">Scheduler.DeadlineMissDetection</div>
+          <div class="test-suite">rtos_test.cpp:40 — WIP</div>
+        </div>
+        <div class="test-time" style="color:var(--accent)">—</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="code-card" style="margin-top:20px">
+    <div class="code-card-header">
+      <span class="file-name">test_uart.py — PyTest</span>
+      <span class="lang-badge">Python / PyTest</span>
+    </div>
+    <pre><span class="kw">import</span> pytest
+<span class="kw">from</span> uart_sim <span class="kw">import</span> UARTDevice, loopback_fixture
+
+<span class="kw">class</span> <span class="type">TestUARTProtocol</span>:
+
+    <span class="kw">def</span> <span class="fn">test_hello_handshake</span>(self, loopback_fixture):
+        <span class="str">"""Device responds with ACK within 5ms of ENQ."""</span>
+        dev = loopback_fixture
+        dev.send_byte(<span class="num">0x05</span>)  <span class="cm"># ENQ</span>
+        resp = dev.wait_byte(timeout_ms=<span class="num">5</span>)
+        <span class="kw">assert</span> resp == <span class="num">0x06</span>, <span class="fn">f</span><span class="str">"Expected ACK(0x06), got 0x{resp:02X}"</span>
+
+    <span class="kw">def</span> <span class="fn">test_baud_tolerance</span>(self, loopback_fixture):
+        <span class="str">"""Device accepts ±2% baud rate deviation per datasheet."""</span>
+        <span class="kw">for</span> baud <span class="kw">in</span> [<span class="num">112700</span>, <span class="num">115200</span>, <span class="num">117500</span>]:
+            loopback_fixture.set_baud(baud)
+            <span class="kw">assert</span> loopback_fixture.ping() == <span class="num">True</span>
+
+    @pytest.mark.parametrize(<span class="str">"payload,expected_crc"</span>, [
+        (<span class="str">b"\x01\x02\x03"</span>, <span class="num">0xD2</span>),
+        (<span class="str">b"\xFF\x00\x80"</span>, <span class="num">0x1A</span>),
+    ])
+    <span class="kw">def</span> <span class="fn">test_crc8_checksum</span>(self, payload, expected_crc):
+        <span class="kw">from</span> uart_sim <span class="kw">import</span> crc8_maxim
+        <span class="kw">assert</span> <span class="fn">crc8_maxim</span>(payload) == expected_crc</pre>
+  </div>
+</div>
+
+<!-- TAB 6: Git Workflow -->
+<div class="panel" id="panel-5">
+  <div class="section-label"><span>//</span> Git Workflow — Feature Branch + Code Review</div>
+
+  <div class="terminal" style="margin-bottom:24px;">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="term-title">git log --oneline --graph --all</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="output-ok">* a3f2c89</span> <span class="output">(HEAD → feature/ring-buf, origin/feature/ring-buf)</span></div>
+      <div class="t-line"><span class="output">|           fix: resolve race in concurrent producer-consumer test</span></div>
+      <div class="t-line"><span class="output">* 8b1d341   test: add Google Test suite for RingBuffer</span></div>
+      <div class="t-line"><span class="output">* 3e90cf2   feat: lock-free ring buffer with atomic head/tail</span></div>
+      <div class="t-line"><span class="output">| * f4a771d  (origin/main) fix: uart ISR overflow guard</span></div>
+      <div class="t-line"><span class="output">|/</span></div>
+      <div class="t-line"><span class="output">* c12a309   feat: SPI bit-bang driver with timing constants</span></div>
+      <div class="t-line"><span class="output">* 77de018   chore: init cmake + arm-none-eabi toolchain</span></div>
+    </div>
+  </div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">Git log — commit history</span>
+      <span class="lang-badge">Git</span>
+    </div>
+    <div class="git-log" style="padding:8px 0;">
+      <div class="git-entry">
+        <span class="git-hash">a3f2c89</span>
+        <span class="git-author">dev@embedded</span>
+        <span class="git-msg"><span class="git-tag">HEAD</span><span class="git-tag-green">fix</span> resolve race in concurrent producer-consumer test — memory_order_acquire on tail read</span>
+      </div>
+      <div class="git-entry">
+        <span class="git-hash">8b1d341</span>
+        <span class="git-author">dev@embedded</span>
+        <span class="git-msg"><span class="git-tag-green">test</span> add 12-case GTest suite for RingBuffer; integrate with CMake CTest</span>
+      </div>
+      <div class="git-entry">
+        <span class="git-hash">3e90cf2</span>
+        <span class="git-author">dev@embedded</span>
+        <span class="git-msg"><span class="git-tag-green">feat</span> lock-free ring buffer template — power-of-2 static_assert, cache-line alignment</span>
+      </div>
+      <div class="git-entry">
+        <span class="git-hash">f4a771d</span>
+        <span class="git-author">reviewer@ci</span>
+        <span class="git-msg"><span class="git-tag">origin/main</span><span class="git-tag-green">fix</span> uart ISR: add overflow guard, clear EOI register after service</span>
+      </div>
+      <div class="git-entry">
+        <span class="git-hash">c12a309</span>
+        <span class="git-author">dev@embedded</span>
+        <span class="git-msg"><span class="git-tag-green">feat</span> SPI bit-bang driver — mode 0, timing constants from datasheet Table 12</span>
+      </div>
+      <div class="git-entry">
+        <span class="git-hash">77de018</span>
+        <span class="git-author">dev@embedded</span>
+        <span class="git-msg"><span class="git-tag-green">chore</span> init cmake project, arm-none-eabi toolchain, clang-format config</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-card">
+    <div class="code-card-header">
+      <span class="file-name">.github/workflows/ci.yml — CI Pipeline</span>
+      <span class="lang-badge">YAML</span>
+    </div>
+    <pre><span class="type">name</span>: <span class="str">Embedded CI</span>
+<span class="type">on</span>: [push, pull_request]
+
+<span class="type">jobs</span>:
+  <span class="type">build-and-test</span>:
+    <span class="type">runs-on</span>: ubuntu-latest
+    <span class="type">steps</span>:
+      - <span class="type">uses</span>: actions/checkout@v4
+      - <span class="type">name</span>: Install ARM toolchain
+        <span class="type">run</span>: <span class="str">|</span>
+          sudo apt-get install -y gcc-arm-none-eabi ninja-build cmake
+      - <span class="type">name</span>: Build host tests
+        <span class="type">run</span>: <span class="str">|</span>
+          cmake -B build -GNinja -DHOST_TEST=ON
+          ninja -C build
+      - <span class="type">name</span>: Run GTest suite
+        <span class="type">run</span>: ctest --test-dir build --output-on-failure
+      - <span class="type">name</span>: Run PyTest
+        <span class="type">run</span>: pytest tests/ -v --tb=short
+      - <span class="type">name</span>: Static analysis
+        <span class="type">run</span>: cppcheck --enable=all --error-exitcode=1 src/</pre>
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="section-label"><span>//</span> Skills demonstrated in this project</div>
+    <div id="skills-grid"></div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+const panels = document.querySelectorAll('.panel');
+const tabs = document.querySelectorAll('.tab');
+
+function switchTab(i) {
+  panels.forEach(p => p.classList.remove('active'));
+  tabs.forEach(t => t.classList.remove('active'));
+  panels[i].classList.add('active');
+  tabs[i].classList.add('active');
+  if (i === 5) initSkills();
+}
+
+// ---- RTOS Simulator ----
+let tasks = [];
+let tick = 0;
+let autoInterval = null;
+let pidCounter = 1;
+
+const TASK_NAMES = ['uart_rx','spi_tx','watchdog','comms','logger','sensor','net_io','crypto'];
+const STATES = ['RUNNING','SLEEPING','WAITING','STOPPED'];
+const STATE_CLASSES = ['status-run','status-sleep','status-wait','status-stop'];
+
+function addTask() {
+  if (tasks.length >= 8) return;
+  const name = TASK_NAMES[tasks.length % TASK_NAMES.length];
+  tasks.push({ pid: pidCounter++, name, priority: Math.floor(Math.random()*5)+1, state: 0, ticks: 0 });
+  renderProcs();
+  log(`[${tick}] task_create: pid=${tasks[tasks.length-1].pid} name=${name}`);
+}
+
+function tickScheduler() {
+  tick++;
+  if (tasks.length === 0) { log(`[${tick}] No tasks — scheduler idle`); return; }
+
+  // Simple priority scheduler
+  const runnable = tasks.filter(t => t.state !== 3);
+  if (!runnable.length) { log(`[${tick}] All tasks stopped`); return; }
+
+  const highest = runnable.reduce((a,b) => a.priority > b.priority ? a : b);
+
+  tasks.forEach(t => {
+    if (t === highest) {
+      t.state = 0; t.ticks++;
+    } else if (t.state !== 3) {
+      t.state = Math.random() < 0.3 ? 2 : 1;
+    }
+    // Random state changes
+    if (Math.random() < 0.1 && t !== highest) t.state = 3;
+  });
+
+  updateRegisters();
+  updateMemory();
+  renderProcs();
+  log(`[${tick}] sched: running pid=${highest.pid} (${highest.name}) prio=${highest.priority}`);
+}
+
+function renderProcs() {
+  const tb = document.getElementById('proc-tbody');
+  tb.innerHTML = tasks.map(t => `
+    <tr>
+      <td>${t.pid}</td>
+      <td>${t.name}</td>
+      <td>${t.priority}</td>
+      <td class="${STATE_CLASSES[t.state]}">${STATES[t.state]}</td>
+      <td>${t.ticks}</td>
+    </tr>`).join('');
+}
+
+function updateRegisters() {
+  const rand16 = () => '0x' + (Math.random()*0xFFFF|0).toString(16).padStart(4,'0').toUpperCase();
+  document.getElementById('reg-pc').textContent = '0x0800' + (Math.random()*0xFFFF|0).toString(16).padStart(4,'0').toUpperCase();
+  document.getElementById('reg-sp').textContent = '0x2000' + (Math.random()*0x7FFF|0).toString(16).padStart(4,'0').toUpperCase();
+  document.getElementById('reg-r0').textContent = rand16();
+  document.getElementById('reg-r1').textContent = rand16();
+  document.getElementById('reg-tick').textContent = tick;
+}
+
+function updateMemory() {
+  const grid = document.getElementById('mem-grid');
+  const cells = grid.querySelectorAll('.mem-cell');
+  const numToWrite = Math.floor(Math.random()*3)+1;
+  const written = new Set();
+  for (let i=0;i<numToWrite;i++) written.add(Math.floor(Math.random()*cells.length));
+  cells.forEach((c,i) => {
+    c.classList.remove('written','active');
+    if (written.has(i)) { c.textContent=(Math.random()*0xFF|0).toString(16).padStart(2,'0'); c.classList.add('written'); }
+  });
+}
+
+function autoRun() {
+  if (autoInterval) {
+    clearInterval(autoInterval);
+    autoInterval = null;
+    document.getElementById('auto-btn').textContent = '⟳ Auto Run';
+  } else {
+    autoInterval = setInterval(tickScheduler, 600);
+    document.getElementById('auto-btn').textContent = '⏹ Stop Auto';
+  }
+}
+
+function resetSim() {
+  if (autoInterval) { clearInterval(autoInterval); autoInterval = null; document.getElementById('auto-btn').textContent = '⟳ Auto Run'; }
+  tasks = []; tick = 0; pidCounter = 1;
+  renderProcs();
+  document.getElementById('sched-log').innerHTML = '';
+  document.getElementById('reg-tick').textContent = '0';
+  initMemGrid();
+}
+
+function log(msg) {
+  const el = document.getElementById('sched-log');
+  el.innerHTML = `<div style="color:var(--muted);margin-bottom:3px;">${msg}</div>` + el.innerHTML;
+}
+
+function initMemGrid() {
+  const grid = document.getElementById('mem-grid');
+  grid.innerHTML = '';
+  for (let i=0;i<64;i++) {
+    const c = document.createElement('div');
+    c.className = 'mem-cell';
+    c.textContent = '00';
+    grid.appendChild(c);
+  }
+}
+
+// ---- Test Runner ----
+function filterTests(filter) {
+  const items = document.querySelectorAll('.test-item');
+  items.forEach(item => {
+    const status = item.dataset.status;
+    if (filter === 'all') item.style.display = '';
+    else if (filter === 'pass' && status === 'pass') item.style.display = '';
+    else if (filter === 'fail' && status === 'fail') item.style.display = '';
+    else if (filter !== 'all' && filter !== status) item.style.display = 'none';
+  });
+}
+
+function runTests() {
+  const items = document.querySelectorAll('.test-item');
+  items.forEach((item, i) => {
+    item.style.opacity = '0.3';
+    setTimeout(() => { item.style.opacity = '1'; item.style.transition = 'opacity 0.3s'; }, i * 120);
+  });
+}
+
+// ---- Skills ----
+const skills = [
+  { name: 'C / C++ (Embedded)', pct: 85, color: 'default' },
+  { name: 'Linux & Bash Scripting', pct: 80, color: 'green' },
+  { name: 'Real-Time OS Concepts', pct: 75, color: 'default' },
+  { name: 'Hardware Timing & SPI/UART', pct: 78, color: 'green' },
+  { name: 'Google Test / PyTest', pct: 72, color: 'yellow' },
+  { name: 'Git / CI Workflows', pct: 88, color: 'green' },
+  { name: 'CPU Architecture & Memory', pct: 70, color: 'yellow' },
+  { name: 'Python / Bash Scripting', pct: 80, color: 'default' },
+];
+
+let skillsInited = false;
+function initSkills() {
+  if (skillsInited) return;
+  skillsInited = true;
+  const grid = document.getElementById('skills-grid');
+  grid.innerHTML = skills.map(s => `
+    <div class="skill-row">
+      <div class="skill-label"><span>${s.name}</span><span>${s.pct}%</span></div>
+      <div class="skill-bar"><div class="skill-fill ${s.color}" data-pct="${s.pct}"></div></div>
+    </div>`).join('');
+  setTimeout(() => {
+    document.querySelectorAll('.skill-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 50);
+}
+
+// Init
+initMemGrid();
+// Add 3 starter tasks
+['uart_rx','watchdog','comms'].forEach(() => addTask());
+</script>
+</body>
+</html>
